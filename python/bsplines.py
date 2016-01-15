@@ -4,87 +4,69 @@ from scipy.interpolate import splev
 from matplotlib import pyplot as plt
 
 
-def evaluate(x, knots, degree):
-    '''Evaluate all B-spline bases.
-
-    x : The points at which to evaluate the bases.
-    knots : The knots defining the B-spline.
-    degree : The degree of the polynomial pieces.
-
-    returns : A matrix with a row for each input and a column for each
-    basis.
-
-    '''
-    c = np.eye(num_bases(knots, degree))
-    return np.array(splev(x, (knots, c, degree))).T
-
-
-def num_bases(knots, degree):
-    '''The dimension of the implied B-spline space.
-
-    knots : The knots defining the B-spline.
-    degree : The degree of the polynomial pieces.
-
-    returns : The number of bases spanning the B-splines.
-
-    '''
-    return len(knots) - degree - 1
-
-
-def uniform_knots(low, high, num_bases, degree):
-    '''Create the standard uniform B-spline knots.
-
-    low : The lower bound of the domain.
-    high : The upper bound of the domain.
-    num_bases : The desired number of bases.
-    degree : The degree of the polynomial pieces.
-
-    returns : An array of knots.
-
-    '''
-    num_knots = num_bases + degree + 1
-    num_interior = num_knots - 2 * (degree + 1)
-    
-    knots = np.linspace(low, high, num_interior + 2).tolist()
-    knots = degree * [low] + knots + degree * [high]
-    return np.array(knots)
-
-
-def pspline_penalty(knots, degree, order=1):
-    '''Construct a P-spline penalty matrix for regression.
-
-    knots : The knots defining the B-spline.
-    degree : The degree of the polynomial pieces.
-    order : The order of differences to take between coefficients.
-
-    returns : A symmetric penalty matrix for B-spline coefficients.
-
-    '''
-    D = np.eye(num_bases(knots, degree))
-    D = np.diff(D, order)
-    return np.dot(D, D.T)
-
-
 class BSplineBasis:
-    '''Object interface to B-splines.
+
+    def __init__(self, full_knots, degree):
+        self._knots = np.array(full_knots)
+        self._degree = int(degree)
+        self._dimension = len(self._knots) - self._degree - 1
+        self._tck = (self._knots, np.eye(self._dimension), self._degree)
+
+    def __len__(self):
+        return self._dimension
+
+    def __call__(self, x):
+        Bt = np.array(splev(x, self._tck))
+        return Bt.T
+
+    def __repr__(self):
+        knot_str = '[' + ', '.join(str(k) for k in self._knots) + ']'
+        return 'BSplineBasis({}, {})'.format(knot_str, self._degree)
+
+    def plot(self, grid_size=200):
+        x = np.linspace(self._knots[0], self._knots[-1], grid_size)
+        for y in self(x).T:
+            plt.plot(x, y)
+
+    @classmethod
+    def uniform(cls, low, high, num_bases, degree):
+        '''Construct a uniform basis between low and high.
+
+        low : Lower bound of the basis.
+        high : Upper bound.
+        num_bases : The number of bases (dimension) of the basis.
+        degree : The degree of the polynomial pieces.
+
+        returns : A new BSplineBasis.
+
+        '''
+        num_knots = num_bases + degree + 1
+        num_interior_knots = num_knots - 2 * (degree + 1)
+        knots = np.linspace(low, high, num_interior_knots + 2)
+        return cls.with_knots(knots, degree)
+
+    @classmethod
+    def with_knots(cls, knots, degree):
+        '''Construct a basis based on a knot sequence.
+
+        The knot sequence should contain the lower and upper bound as
+        the first and last elements of the sequence. The elements in
+        between are the interior knots of the basis.
+
+        knots : The knots (including the boundaries and interior knots).
+        degree : The degree of the polynomial pieces.
+
+        returns : A new BSplineBasis.
+
+        '''
+        knots = list(knots)
+        knots = ([knots[0]] * degree) + knots + ([knots[-1]] * degree)
+        return cls(knots, degree)
+
+
+def pspline_penalty(basis, order=1):
+    '''Return a differences penalty matrix.
 
     '''
-    def __init__(self, low, high, num_bases, degree):
-        self.low = low
-        self.high = high
-        self.num_bases = num_bases
-        self.degree = degree
-        self.knots = uniform_knots(low, high, num_bases, degree)
-
-    def evaluate(self, x):
-        return evaluate(x, self.knots, self.degree)
-
-    def pspline_penalty(self, order=1):
-        return pspline_penalty(self.knots, self.degree, order=order)
-
-    def plot(self):
-        x = np.linspace(self.low, self.high, 200)
-        B = self.evaluate(x)
-
-        for y in B.T:
-            plt.plot(x, y)
+    D = np.diff(np.eye(len(basis)), order)
+    return np.dot(D, D.T)
