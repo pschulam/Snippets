@@ -19,7 +19,7 @@ StartDate = namedtuple('StartDate', ['year', 'month', 'day'])
 """Named tuple for holding the start date field."""
 
 StartTime = namedtuple('StartTime', ['hour', 'minute', 'second'])
-"""Named tuple for holding the start date field."""
+"""Named tuple for holding the start time field."""
 
 
 def header_and_signals(edf_file):
