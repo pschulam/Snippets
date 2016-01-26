@@ -12,7 +12,10 @@ import numpy as np
 __all__ = ['header_and_signals', 'samples_per_sec']
 
 
-_RAW_INT_SIZE = 2
+_RAW_INT_FORMAT = '<i2'
+"""Specification of the byte format of signal samples."""
+
+_RAW_INT_SIZE = int(_RAW_INT_FORMAT[-1])
 """The size in bytes of the integer encoding of signal samples."""
 
 StartDate = namedtuple('StartDate', ['year', 'month', 'day'])
@@ -156,7 +159,7 @@ def _read_record(edf_file, header):
         if not len(raw_bytes) == num_bytes:
             raise EOFError('Could not read a full record.')
 
-        digital = np.fromstring(raw_bytes, '<i2').astype(np.float)
+        digital = np.fromstring(raw_bytes, _RAW_INT_FORMAT).astype(np.float)
         physical = _dig_to_phys(digital, channel, header)
         signals[labels[channel]] = physical
 
