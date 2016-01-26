@@ -16,10 +16,10 @@ _RAW_INT_SIZE = 2
 """The size in bytes of the integer encoding of signal samples."""
 
 StartDate = namedtuple('StartDate', ['year', 'month', 'day'])
-"""Named tuple for holding the start date field."""
+"""Data structure for the start date field."""
 
 StartTime = namedtuple('StartTime', ['hour', 'minute', 'second'])
-"""Named tuple for holding the start time field."""
+"""Data structure for the start time field."""
 
 
 def header_and_signals(edf_file):
