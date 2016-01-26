@@ -1,3 +1,7 @@
+"""A B-spline basis class and tools for working with it.
+
+"""
+
 import numpy as np
 
 from scipy.interpolate import splev
@@ -5,6 +9,37 @@ from matplotlib import pyplot as plt
 
 
 class BSplineBasis:
+    """A function-like object for evaluating B-spline bases.
+
+    Basic Usage
+    -----------
+
+    The main interface is through function call syntax; an instance of
+    the class can be called with a sequence of real-values and will
+    produce a design matrix where each row is the value of a basis
+    function at the corresponding value in the input sequence. For
+    example, if b is a basis then:
+
+    >>> b = BSplineBasis.with_knots([0, 5, 10], degree=1)
+    >>> b([2.5, 7.5])
+    array([[ 0.5,  0.5,  0. ],
+           [ 0. ,  0.5,  0.5]])
+
+    A basis can be constructed in one of two ways:
+
+    1. Call the uniform class method with a lower and upper bound on
+    the domain, the number of desired bases (i.e. the number of
+    columns in the design matrices), and a degree (higher degrees
+    yield smoother bases).
+
+    2. Call the with_knots class method with a knot sequence that
+    contains the lower and upper bound as the first and last elements
+    respectively and a degree.
+
+    You can visualize a basis by calling the plot method. You may need
+    to call matplotlib.pyplot.show if your backend is not interactive.
+
+    """
 
     def __init__(self, full_knots, degree):
         self._knots = np.array(full_knots)
@@ -16,28 +51,34 @@ class BSplineBasis:
         return self._dimension
 
     def __call__(self, x):
-        Bt = np.array(splev(x, self._tck))
-        return Bt.T
+        """Evaluate the bases at the given inputs."""
+        bases = np.array(splev(x, self._tck))
+        return bases.transpose()
 
     def __repr__(self):
         knot_str = '[' + ', '.join(str(k) for k in self._knots) + ']'
         return 'BSplineBasis({}, {})'.format(knot_str, self._degree)
 
     def plot(self, grid_size=200):
-        x = np.linspace(self._knots[0], self._knots[-1], grid_size)
-        for y in self(x).T:
-            plt.plot(x, y)
+        """Plot the individual bases in the basis."""
+        xgrid = np.linspace(self._knots[0], self._knots[-1], grid_size)
+        for ygrid in self(xgrid).T:
+            plt.plot(xgrid, ygrid)
 
     @classmethod
     def uniform(cls, low, high, num_bases, degree):
         '''Construct a uniform basis between low and high.
 
+        Parameters
+        ----------
         low : Lower bound of the basis.
         high : Upper bound.
         num_bases : The number of bases (dimension) of the basis.
         degree : The degree of the polynomial pieces.
 
-        returns : A new BSplineBasis.
+        Returns
+        -------
+        A new BSplineBasis.
 
         '''
         num_knots = num_bases + degree + 1
@@ -53,10 +94,14 @@ class BSplineBasis:
         the first and last elements of the sequence. The elements in
         between are the interior knots of the basis.
 
+        Parameters
+        ----------
         knots : The knots (including the boundaries and interior knots).
         degree : The degree of the polynomial pieces.
 
-        returns : A new BSplineBasis.
+        Returns
+        -------
+        A new BSplineBasis.
 
         '''
         knots = list(knots)
@@ -67,6 +112,11 @@ class BSplineBasis:
 def pspline_penalty(basis, order=1):
     '''Return a differences penalty matrix.
 
+    The penalty matrix can be used in least squares regression to bias
+    the result to be smooth. In other words, rapid changes in
+    coefficient values are penalized. Higher order difference matrices
+    effectively decrease the degrees of freedom of the regression.
+
     '''
     D = np.diff(np.eye(len(basis)), order)
-    return np.dot(D, D.T)
+    return D @ D.T
