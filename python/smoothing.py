@@ -3,7 +3,9 @@
 import numpy as np
 import scipy.linalg as la
 
-__all__ = ['KernelSmoother', 'box_kernel', 'gaussian_kernel']
+__all__ = ['KernelSmoother',
+           'smooth', 'estimate_bandwidth', 'loo_estimates',
+           'box_kernel', 'gaussian_kernel']
 
 
 class KernelSmoother:
