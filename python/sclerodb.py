@@ -29,19 +29,19 @@ def run_query(conn, query):
 
 def tables(conn):
     """Get the names of all tables."""
-    table_info = run_query(conn, 'select * from information_schema.tables;')
-    return [row['TABLE_NAME'] for row in table_info]
+    query = 'select * from information_schema.tables'
+    result = run_query(conn, query)
+    return [row['TABLE_NAME'] for row in result]
 
 
 def columns(conn, table):
     """Get the information on columns of a table."""
     query = 'select * from information_schema.columns'
-    for row in run_query(conn, query):
-        if row['TABLE_NAME'] == table:
-            yield row
+    result = run_query(conn, query)
+    return [row for row in result if row['TABLE_NAME'] == table]
 
 
 def get_table(conn, table):
-    """Fetch an entire table."""
+    """Query for an entire table."""
     query = 'select * from {}'.format(table)
     return run_query(conn, query)
