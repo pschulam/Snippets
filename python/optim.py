@@ -1,9 +1,11 @@
 """Tools for optimization.
 
-This module does not implement any optimization algorithms; many such
-algorithms can be imported from scipy.optimize (or other optimization
-libraries). Instead, it provides a suite of tools that are useful when
-prototyping and debugging an optimization problem.
+This module does not (yet) implement any optimization algorithms; many
+such algorithms can be imported from scipy.optimize (or other
+optimization libraries). Instead, it provides a suite of tools that
+are useful when prototyping and debugging an optimization problem. In
+the future, some simple algorithms like gradient descent (GD) and
+stochastic GD may be added.
 
 """
 import numpy as np
